@@ -1,0 +1,16 @@
+package com
+
+import com.seeders.DatabaseSeeder
+import kotlinx.coroutines.runBlocking
+
+fun main(args: Array<String>) {
+    if (args.contains("--seed")) {
+        runBlocking {
+            com.config.DatabaseConfig.init()
+            DatabaseSeeder.seedAll()
+        }
+        return
+    }
+
+    com.main()
+}
