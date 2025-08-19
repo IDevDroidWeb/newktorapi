@@ -18,7 +18,7 @@ data class CreateSpecificationRequest(
 )
 
 fun Route.specificationRoutes() {
-    val specificationService = SpecificationService()
+    val specificationService = SpecificationService() // ✅ Service declared here
 
     route("/specifications") {
         get {
@@ -67,4 +67,17 @@ fun Route.specificationRoutes() {
             delete("/{id}") {
                 try {
                     val id = call.parameters["id"]?.toObjectId()
-                        ?: throw IllegalArgumentException("Invali
+                        ?: throw IllegalArgumentException("Invalid specification ID")
+                    val deleted = specificationService.deleteSpecification(id) // ✅ Now works
+                    if (deleted) {
+                        call.respondSuccess(mapOf("deleted" to true), "Specification deleted successfully")
+                    } else {
+                        call.respondError("Failed to delete specification")
+                    }
+                } catch (e: Exception) {
+                    call.respondError(e.message ?: "Failed to delete specification")
+                }
+            }
+        }
+    }
+}

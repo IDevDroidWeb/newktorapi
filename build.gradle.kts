@@ -72,6 +72,10 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test:$kotlin_version")
     testImplementation("io.mockk:mockk:1.13.7")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+
+    // HTTP
+    implementation("io.ktor:ktor-server-default-headers:${ktor_version}")
+    implementation("io.ktor:ktor-server-forwarded-header:${ktor_version}")
 }
 
 tasks.create("stage").dependsOn("installDist")

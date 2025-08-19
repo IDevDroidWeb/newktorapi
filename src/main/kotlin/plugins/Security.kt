@@ -1,5 +1,8 @@
 package com.plugins
 
+import com.auth0.jwt.JWT
+import com.auth0.jwt.algorithms.Algorithm
+import com.auth0.jwt.interfaces.Payload
 import com.config.AuthConfig
 import com.utils.ResponseWrapper.respondError
 import io.ktor.http.*
@@ -13,7 +16,25 @@ import kotlin.time.Duration.Companion.minutes
 fun Application.configureSecurity() {
     install(Authentication) {
         jwt("auth-jwt") {
-            configure(AuthConfig.configureJWT())
+            realm = AuthConfig.jwtRealm
+            verifier(
+                JWT.require(Algorithm.HMAC256(AuthConfig.jwtSecret))
+                    .withAudience(AuthConfig.jwtAudience)
+                    .withIssuer(AuthConfig.jwtIssuer)
+                    .build()
+            )
+            validate { credential ->
+                if (credential.payload.audience.contains(AuthConfig.jwtAudience)) {
+                    val userId = credential.payload.getClaim("userId").asString()
+                    val phone = credential.payload.getClaim("phone").asString()
+                    val isTemp = credential.payload.getClaim("temp")?.asBoolean() ?: false
+
+                    // Only allow non-temporary tokens for regular auth
+                    if (!isTemp && userId != null && phone != null) {
+                        JWTPrincipal(credential.payload)
+                    } else null
+                } else null
+            }
             challenge { _, _ ->
                 call.respondError(
                     "Token is not valid or has expired",
@@ -23,19 +44,21 @@ fun Application.configureSecurity() {
         }
 
         jwt("auth-temp") {
-            configure(AuthConfig.configureJWT())
+            realm = AuthConfig.jwtRealm
+            verifier(
+                JWT.require(Algorithm.HMAC256(AuthConfig.jwtSecret))
+                    .withAudience(AuthConfig.jwtAudience)
+                    .withIssuer(AuthConfig.jwtIssuer)
+                    .build()
+            )
             validate { credential ->
                 if (credential.payload.audience.contains(AuthConfig.jwtAudience)) {
                     val phone = credential.payload.getClaim("phone").asString()
                     val isTemp = credential.payload.getClaim("temp")?.asBoolean() ?: false
 
-                    if (isTemp) {
-                        JWTPrincipal(
-                            mapOf(
-                                "phone" to phone,
-                                "isTemp" to isTemp.toString()
-                            )
-                        )
+                    // Only allow temporary tokens for temp auth
+                    if (isTemp && phone != null) {
+                        JWTPrincipal(credential.payload)
                     } else null
                 } else null
             }

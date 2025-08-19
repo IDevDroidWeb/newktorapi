@@ -9,18 +9,20 @@ import java.time.format.DateTimeFormatter
 
 fun ApplicationCall.getUserId(): ObjectId {
     val principal = principal<JWTPrincipal>()
-    val userId = principal?.get("userId") ?: throw IllegalStateException("User ID not found in token")
+    val userId = principal?.payload?.getClaim("userId")?.asString()
+        ?: throw IllegalStateException("User ID not found in token")
     return ObjectId(userId)
 }
 
 fun ApplicationCall.getUserPhone(): String {
     val principal = principal<JWTPrincipal>()
-    return principal?.get("phone") ?: throw IllegalStateException("Phone not found in token")
+    return principal?.payload?.getClaim("phone")?.asString()
+        ?: throw IllegalStateException("Phone not found in token")
 }
 
 fun ApplicationCall.isTemporaryToken(): Boolean {
     val principal = principal<JWTPrincipal>()
-    return principal?.get("isTemp")?.toBoolean() ?: false
+    return principal?.payload?.getClaim("temp")?.asBoolean() ?: false
 }
 
 fun LocalDateTime.toIsoString(): String {

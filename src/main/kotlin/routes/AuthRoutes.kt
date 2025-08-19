@@ -19,18 +19,10 @@ fun Route.authRoutes() {
         try {
             val request = call.receive<LoginRequest>()
 
-            val validation = Validators.loginValidation.validate(
-                mapOf(
-                    "identifier" to request.identifier,
-                    "password" to request.password
-                )
-            )
-
-            if (validation.errors.isNotEmpty()) {
-                call.respondError(
-                    "Validation failed",
-                    validation.errors.map { "${it.dataPath}: ${it.message}" }
-                )
+            // Use simple validation
+            val errors = Validators.validateLogin(request.identifier, request.password)
+            if (errors.isNotEmpty()) {
+                call.respondError("Validation failed", errors)
                 return@post
             }
 
@@ -45,15 +37,10 @@ fun Route.authRoutes() {
         try {
             val request = call.receive<RegisterStep1Request>()
 
-            val validation = Validators.registerStep1Validation.validate(
-                mapOf("phone" to request.phone)
-            )
-
-            if (validation.errors.isNotEmpty()) {
-                call.respondError(
-                    "Validation failed",
-                    validation.errors.map { "${it.dataPath}: ${it.message}" }
-                )
+            // Use simple validation
+            val errors = Validators.validateRegisterStep1(request.phone)
+            if (errors.isNotEmpty()) {
+                call.respondError("Validation failed", errors)
                 return@post
             }
 
@@ -90,19 +77,10 @@ fun Route.authRoutes() {
                 val request = call.receive<RegisterStep2Request>()
                 val phone = call.getUserPhone()
 
-                val validation = Validators.registerStep2Validation.validate(
-                    mapOf(
-                        "name" to request.name,
-                        "email" to request.email,
-                        "password" to request.password
-                    )
-                )
-
-                if (validation.errors.isNotEmpty()) {
-                    call.respondError(
-                        "Validation failed",
-                        validation.errors.map { "${it.dataPath}: ${it.message}" }
-                    )
+                // Use simple validation
+                val errors = Validators.validateRegisterStep2(request.name, request.email, request.password)
+                if (errors.isNotEmpty()) {
+                    call.respondError("Validation failed", errors)
                     return@post
                 }
 
