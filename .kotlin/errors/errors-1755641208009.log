@@ -1,0 +1,483 @@
+kotlin version: 2.1.10
+error message: org.jetbrains.kotlin.backend.common.CompilationException: Back-end: Please report this problem https://kotl.in/issue
+C:/Users/Yousef/realestate/src/main/kotlin/models/Property.kt:9:1
+Problem with `@Serializable
+data class Property {
+  constructor(@BsonId id: String = ObjectId(), images: List<String> = emptyList<String>(), video: String? = null, title: String, description: String, categoryId: Strin, categoryName: String, propertyTypeId: String, propertyTypeName: String, specifications: List<ObjectId> = emptyList<ObjectId>(), area: Double, rooms: Byte, baths: Byte, price: Double, locationString: String, latitude: Double, longitude: Double, uploadTime: LocalDateTime = now(), expireTime: LocalDateTime = now().plusDays(p0 = 30L), ownerId: String, countryId: String, governorateId: String, featured: Boolean = false, pinned: Boolean = false, status: String = "active", sold: Boolean = false) /* primary */ {
+    super/*Any*/()
+    /* <init>() */
+
+  }
+
+  @Contextual
+  val id: String
+    field = id
+    get
+
+  val images: List<String>
+    field = images
+    get
+
+  val video: String?
+    field = video
+    get
+
+  val title: String
+    field = title
+    get
+
+  val description: String
+    field = description
+    get
+
+  @Contextual
+  val categoryId: String
+    field = categoryId
+    get
+
+  val categoryName: String
+    field = categoryName
+    get
+
+  @Contextual
+  val propertyTypeId: String
+    field = propertyTypeId
+    get
+
+  val propertyTypeName: String
+    field = propertyTypeName
+    get
+
+  @Contextual
+  val specifications: List<ObjectId>
+    field = specifications
+    get
+
+  val area: Double
+    field = area
+    get
+
+  val rooms: Byte
+    field = rooms
+    get
+
+  val baths: Byte
+    field = baths
+    get
+
+  val price: Double
+    field = price
+    get
+
+  val locationString: String
+    field = locationString
+    get
+
+  val latitude: Double
+    field = latitude
+    get
+
+  val longitude: Double
+    field = longitude
+    get
+
+  @Contextual
+  val uploadTime: LocalDateTime
+    field = uploadTime
+    get
+
+  @Contextual
+  val expireTime: LocalDateTime
+    field = expireTime
+    get
+
+  @Contextual
+  val ownerId: String
+    field = ownerId
+    get
+
+  @Contextual
+  val countryId: String
+    field = countryId
+    get
+
+  @Contextual
+  val governorateId: String
+    field = governorateId
+    get
+
+  val featured: Boolean
+    field = featured
+    get
+
+  val pinned: Boolean
+    field = pinned
+    get
+
+  val status: String
+    field = status
+    get
+
+  val sold: Boolean
+    field = sold
+    get
+
+  companion object Companion {
+    private constructor() /* primary */ {
+      super/*Any*/()
+      /* <init>() */
+
+    }
+
+    fun serializer(): KSerializer<Property>
+
+    /* fake */ override operator fun equals(other: Any?): Boolean
+
+    /* fake */ override fun hashCode(): Int
+
+    /* fake */ override fun toString(): String
+
+  }
+
+  @Deprecated(message = "This synthesized declaration should not be used directly", level = DeprecationLevel.HIDDEN)
+  object $serializer : GeneratedSerializer<Property> {
+    private constructor() /* primary */ {
+      super/*Any*/()
+      /* <init>() */
+
+    }
+
+    override fun serialize(encoder: Encoder, value: Property)
+
+    override fun deserialize(decoder: Decoder): Property
+
+    override val descriptor: SerialDescriptor
+      override get
+
+    override fun childSerializers(): Array<KSerializer<*>>
+
+    /* fake */ override fun typeParametersSerializers(): Array<KSerializer<*>>
+
+    /* fake */ override operator fun equals(other: Any?): Boolean
+
+    /* fake */ override fun hashCode(): Int
+
+    /* fake */ override fun toString(): String
+
+  }
+
+  operator fun component1(): ObjectId {
+    return <this>.#id
+  }
+
+  operator fun component2(): List<String> {
+    return <this>.#images
+  }
+
+  operator fun component3(): String? {
+    return <this>.#video
+  }
+
+  operator fun component4(): String {
+    return <this>.#title
+  }
+
+  operator fun component5(): String {
+    return <this>.#description
+  }
+
+  operator fun component6(): ObjectId {
+    return <this>.#categoryId
+  }
+
+  operator fun component7(): String {
+    return <this>.#categoryName
+  }
+
+  operator fun component8(): ObjectId {
+    return <this>.#propertyTypeId
+  }
+
+  operator fun component9(): String {
+    return <this>.#propertyTypeName
+  }
+
+  operator fun component10(): List<ObjectId> {
+    return <this>.#specifications
+  }
+
+  operator fun component11(): Double {
+    return <this>.#area
+  }
+
+  operator fun component12(): Byte {
+    return <this>.#rooms
+  }
+
+  operator fun component13(): Byte {
+    return <this>.#baths
+  }
+
+  operator fun component14(): Double {
+    return <this>.#price
+  }
+
+  operator fun component15(): String {
+    return <this>.#locationString
+  }
+
+  operator fun component16(): Double {
+    return <this>.#latitude
+  }
+
+  operator fun component17(): Double {
+    return <this>.#longitude
+  }
+
+  operator fun component18(): LocalDateTime {
+    return <this>.#uploadTime
+  }
+
+  operator fun component19(): LocalDateTime {
+    return <this>.#expireTime
+  }
+
+  operator fun component20(): ObjectId {
+    return <this>.#ownerId
+  }
+
+  operator fun component21(): ObjectId {
+    return <this>.#countryId
+  }
+
+  operator fun component22(): ObjectId {
+    return <this>.#governorateId
+  }
+
+  operator fun component23(): Boolean {
+    return <this>.#featured
+  }
+
+  operator fun component24(): Boolean {
+    return <this>.#pinned
+  }
+
+  operator fun component25(): String {
+    return <this>.#status
+  }
+
+  operator fun component26(): Boolean {
+    return <this>.#sold
+  }
+
+  fun copy(@BsonId id: String = <this>.#id, images: List<String> = <this>.#images, video: String? = <this>.#video, title: String = <this>.#title, description: String = <this>.#description, categoryId: String = <this>.#categoryId, categoryName: String = <this>.#categoryName, propertyTypeId: String = <this>.#propertyTypeId, propertyTypeName: String = <this>.#propertyTypeName, specifications: List<ObjectId> = <this>.#specifications, area: Double = <this>.#area, rooms: Byte = <this>.#rooms, baths: Byte = <this>.#baths, price: Double = <this>.#price, locationString: String = <this>.#locationString, latitude: Double = <this>.#latitude, longitude: Double = <this>.#longitude, uploadTime: LocalDateTime = <this>.#uploadTime, expireTime: LocalDateTime = <this>.#expireTime, ownerId: String = <this>.#ownerId, countryId: String = <this>.#countryId, governorateId: String = <this>.#governorateId, featured: Boolean = <this>.#featured, pinned: Boolean = <this>.#pinned, status: String = <this>.#status, sold: Boolean = <this>.#sold): Property {
+    return Property(id = id, images = images, video = video, title = title, description = description, categoryId = categoryId, categoryName = categoryName, propertyTypeId = propertyTypeId, propertyTypeName = propertyTypeName, specifications = specifications, area = area, rooms = rooms, baths = baths, price = price, locationString = locationString, latitude = latitude, longitude = longitude, uploadTime = uploadTime, expireTime = expireTime, ownerId = ownerId, countryId = countryId, governorateId = governorateId, featured = featured, pinned = pinned, status = status, sold = sold)
+  }
+
+  override fun toString(): String {
+    return "Property(" + "id=" + <this>.#id + ", " + "images=" + <this>.#images + ", " + "video=" + <this>.#video + ", " + "title=" + <this>.#title + ", " + "description=" + <this>.#description + ", " + "categoryId=" + <this>.#categoryId + ", " + "categoryName=" + <this>.#categoryName + ", " + "propertyTypeId=" + <this>.#propertyTypeId + ", " + "propertyTypeName=" + <this>.#propertyTypeName + ", " + "specifications=" + <this>.#specifications + ", " + "area=" + <this>.#area + ", " + "rooms=" + <this>.#rooms + ", " + "baths=" + <this>.#baths + ", " + "price=" + <this>.#price + ", " + "locationString=" + <this>.#locationString + ", " + "latitude=" + <this>.#latitude + ", " + "longitude=" + <this>.#longitude + ", " + "uploadTime=" + <this>.#uploadTime + ", " + "expireTime=" + <this>.#expireTime + ", " + "ownerId=" + <this>.#ownerId + ", " + "countryId=" + <this>.#countryId + ", " + "governorateId=" + <this>.#governorateId + ", " + "featured=" + <this>.#featured + ", " + "pinned=" + <this>.#pinned + ", " + "status=" + <this>.#status + ", " + "sold=" + <this>.#sold + ")"
+  }
+
+  override fun hashCode(): Int {
+    var result: Int = <this>.#id.hashCode()
+    result = result.times(other = 31).plus(other = <this>.#images.hashCode())
+    result = result.times(other = 31).plus(other = when {
+      EQEQ(arg0 = <this>.#video, arg1 = null) -> 0
+      else -> <this>.#video.hashCode()
+    })
+    result = result.times(other = 31).plus(other = <this>.#title.hashCode())
+    result = result.times(other = 31).plus(other = <this>.#description.hashCode())
+    result = result.times(other = 31).plus(other = <this>.#categoryId.hashCode())
+    result = result.times(other = 31).plus(other = <this>.#categoryName.hashCode())
+    result = result.times(other = 31).plus(other = <this>.#propertyTypeId.hashCode())
+    result = result.times(other = 31).plus(other = <this>.#propertyTypeName.hashCode())
+    result = result.times(other = 31).plus(other = <this>.#specifications.hashCode())
+    result = result.times(other = 31).plus(other = <this>.#area.hashCode())
+    result = result.times(other = 31).plus(other = <this>.#rooms.hashCode())
+    result = result.times(other = 31).plus(other = <this>.#baths.hashCode())
+    result = result.times(other = 31).plus(other = <this>.#price.hashCode())
+    result = result.times(other = 31).plus(other = <this>.#locationString.hashCode())
+    result = result.times(other = 31).plus(other = <this>.#latitude.hashCode())
+    result = result.times(other = 31).plus(other = <this>.#longitude.hashCode())
+    result = result.times(other = 31).plus(other = <this>.#uploadTime.hashCode())
+    result = result.times(other = 31).plus(other = <this>.#expireTime.hashCode())
+    result = result.times(other = 31).plus(other = <this>.#ownerId.hashCode())
+    result = result.times(other = 31).plus(other = <this>.#countryId.hashCode())
+    result = result.times(other = 31).plus(other = <this>.#governorateId.hashCode())
+    result = result.times(other = 31).plus(other = <this>.#featured.hashCode())
+    result = result.times(other = 31).plus(other = <this>.#pinned.hashCode())
+    result = result.times(other = 31).plus(other = <this>.#status.hashCode())
+    result = result.times(other = 31).plus(other = <this>.#sold.hashCode())
+    return result
+  }
+
+  override operator fun equals(other: Any?): Boolean {
+    when {
+      EQEQEQ(arg0 = <this>, arg1 = other) -> return true
+    }
+    when {
+      other !is Property -> return false
+    }
+    val tmp0_other_with_cast: Property = other as Property
+    when {
+      EQEQ(arg0 = <this>.#id, arg1 = tmp0_other_with_cast.#id).not() -> return false
+    }
+    when {
+      EQEQ(arg0 = <this>.#images, arg1 = tmp0_other_with_cast.#images).not() -> return false
+    }
+    when {
+      EQEQ(arg0 = <this>.#video, arg1 = tmp0_other_with_cast.#video).not() -> return false
+    }
+    when {
+      EQEQ(arg0 = <this>.#title, arg1 = tmp0_other_with_cast.#title).not() -> return false
+    }
+    when {
+      EQEQ(arg0 = <this>.#description, arg1 = tmp0_other_with_cast.#description).not() -> return false
+    }
+    when {
+      EQEQ(arg0 = <this>.#categoryId, arg1 = tmp0_other_with_cast.#categoryId).not() -> return false
+    }
+    when {
+      EQEQ(arg0 = <this>.#categoryName, arg1 = tmp0_other_with_cast.#categoryName).not() -> return false
+    }
+    when {
+      EQEQ(arg0 = <this>.#propertyTypeId, arg1 = tmp0_other_with_cast.#propertyTypeId).not() -> return false
+    }
+    when {
+      EQEQ(arg0 = <this>.#propertyTypeName, arg1 = tmp0_other_with_cast.#propertyTypeName).not() -> return false
+    }
+    when {
+      EQEQ(arg0 = <this>.#specifications, arg1 = tmp0_other_with_cast.#specifications).not() -> return false
+    }
+    when {
+      EQEQ(arg0 = <this>.#area, arg1 = tmp0_other_with_cast.#area).not() -> return false
+    }
+    when {
+      EQEQ(arg0 = <this>.#rooms, arg1 = tmp0_other_with_cast.#rooms).not() -> return false
+    }
+    when {
+      EQEQ(arg0 = <this>.#baths, arg1 = tmp0_other_with_cast.#baths).not() -> return false
+    }
+    when {
+      EQEQ(arg0 = <this>.#price, arg1 = tmp0_other_with_cast.#price).not() -> return false
+    }
+    when {
+      EQEQ(arg0 = <this>.#locationString, arg1 = tmp0_other_with_cast.#locationString).not() -> return false
+    }
+    when {
+      EQEQ(arg0 = <this>.#latitude, arg1 = tmp0_other_with_cast.#latitude).not() -> return false
+    }
+    when {
+      EQEQ(arg0 = <this>.#longitude, arg1 = tmp0_other_with_cast.#longitude).not() -> return false
+    }
+    when {
+      EQEQ(arg0 = <this>.#uploadTime, arg1 = tmp0_other_with_cast.#uploadTime).not() -> return false
+    }
+    when {
+      EQEQ(arg0 = <this>.#expireTime, arg1 = tmp0_other_with_cast.#expireTime).not() -> return false
+    }
+    when {
+      EQEQ(arg0 = <this>.#ownerId, arg1 = tmp0_other_with_cast.#ownerId).not() -> return false
+    }
+    when {
+      EQEQ(arg0 = <this>.#countryId, arg1 = tmp0_other_with_cast.#countryId).not() -> return false
+    }
+    when {
+      EQEQ(arg0 = <this>.#governorateId, arg1 = tmp0_other_with_cast.#governorateId).not() -> return false
+    }
+    when {
+      EQEQ(arg0 = <this>.#featured, arg1 = tmp0_other_with_cast.#featured).not() -> return false
+    }
+    when {
+      EQEQ(arg0 = <this>.#pinned, arg1 = tmp0_other_with_cast.#pinned).not() -> return false
+    }
+    when {
+      EQEQ(arg0 = <this>.#status, arg1 = tmp0_other_with_cast.#status).not() -> return false
+    }
+    when {
+      EQEQ(arg0 = <this>.#sold, arg1 = tmp0_other_with_cast.#sold).not() -> return false
+    }
+    return true
+  }
+
+  @JvmStatic
+  internal /* static */ fun write$Self(self: Property, output: CompositeEncoder, serialDesc: SerialDescriptor)
+
+  internal constructor(seen0: Int, id: String?, images: List<String>?, video: String?, title: String?, description: String?, categoryId: String?, categoryName: String?, propertyTypeId: String?, propertyTypeName: String?, specifications: List<ObjectId>?, area: Double, rooms: Byte, baths: Byte, price: Double, locationString: String?, latitude: Double, longitude: Double, uploadTime: LocalDateTime?, expireTime: LocalDateTime?, ownerId: String?, countryId: String?, governorateId: String?, featured: Boolean, pinned: Boolean, status: String?, sold: Boolean, serializationConstructorMarker: SerializationConstructorMarker?)
+
+}
+
+`
+Details: kotlinx.serialization compiler plugin internal error: unable to transform declaration, see cause
+	at org.jetbrains.kotlinx.serialization.compiler.extensions.SerializerClassLowering.lower(SerializationLoweringExtension.kt:230)
+	at org.jetbrains.kotlinx.serialization.compiler.extensions.SerializationLoweringExtensionKt$runOnFileInOrder$1.visitClass(SerializationLoweringExtension.kt:46)
+	at org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid$DefaultImpls.visitClass(IrElementVisitorVoid.kt:48)
+	at org.jetbrains.kotlinx.serialization.compiler.extensions.SerializationLoweringExtensionKt$runOnFileInOrder$1.visitClass(SerializationLoweringExtension.kt:40)
+	at org.jetbrains.kotlinx.serialization.compiler.extensions.SerializationLoweringExtensionKt$runOnFileInOrder$1.visitClass(SerializationLoweringExtension.kt:40)
+	at org.jetbrains.kotlin.ir.declarations.IrClass.accept(IrClass.kt:72)
+	at org.jetbrains.kotlin.ir.declarations.IrFile.acceptChildren(IrFile.kt:34)
+	at org.jetbrains.kotlin.ir.visitors.IrVisitorsKt.acceptChildrenVoid(IrVisitors.kt:15)
+	at org.jetbrains.kotlinx.serialization.compiler.extensions.SerializationLoweringExtensionKt$runOnFileInOrder$1.visitElement(SerializationLoweringExtension.kt:42)
+	at org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid$DefaultImpls.visitPackageFragment(IrElementVisitorVoid.kt:172)
+	at org.jetbrains.kotlinx.serialization.compiler.extensions.SerializationLoweringExtensionKt$runOnFileInOrder$1.visitPackageFragment(SerializationLoweringExtension.kt:40)
+	at org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid$DefaultImpls.visitFile(IrElementVisitorVoid.kt:188)
+	at org.jetbrains.kotlinx.serialization.compiler.extensions.SerializationLoweringExtensionKt$runOnFileInOrder$1.visitFile(SerializationLoweringExtension.kt:40)
+	at org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid$DefaultImpls.visitFile(IrElementVisitorVoid.kt:184)
+	at org.jetbrains.kotlinx.serialization.compiler.extensions.SerializationLoweringExtensionKt$runOnFileInOrder$1.visitFile(SerializationLoweringExtension.kt:40)
+	at org.jetbrains.kotlinx.serialization.compiler.extensions.SerializationLoweringExtensionKt$runOnFileInOrder$1.visitFile(SerializationLoweringExtension.kt:40)
+	at org.jetbrains.kotlin.ir.declarations.IrFile.accept(IrFile.kt:28)
+	at org.jetbrains.kotlin.ir.visitors.IrVisitorsKt.acceptVoid(IrVisitors.kt:11)
+	at org.jetbrains.kotlinx.serialization.compiler.extensions.SerializationLoweringExtensionKt.runOnFileInOrder(SerializationLoweringExtension.kt:40)
+	at org.jetbrains.kotlinx.serialization.compiler.extensions.SerializationLoweringExtension.generate(SerializationLoweringExtension.kt:194)
+	at org.jetbrains.kotlin.fir.pipeline.ConvertToIrKt.applyIrGenerationExtensions(convertToIr.kt:472)
+	at org.jetbrains.kotlin.fir.pipeline.Fir2IrPipeline.runActualizationPipeline(convertToIr.kt:241)
+	at org.jetbrains.kotlin.fir.pipeline.Fir2IrPipeline.convertToIrAndActualize(convertToIr.kt:130)
+	at org.jetbrains.kotlin.fir.pipeline.ConvertToIrKt.convertToIrAndActualize(convertToIr.kt:100)
+	at org.jetbrains.kotlin.fir.pipeline.ConvertToIrKt.convertToIrAndActualize$default(convertToIr.kt:75)
+	at org.jetbrains.kotlin.cli.jvm.compiler.pipeline.JvmCompilerPipelineKt.convertToIrAndActualizeForJvm(jvmCompilerPipeline.kt:134)
+	at org.jetbrains.kotlin.cli.jvm.compiler.pipeline.JvmCompilerPipelineKt.convertAnalyzedFirToIr(jvmCompilerPipeline.kt:107)
+	at org.jetbrains.kotlin.cli.jvm.compiler.pipeline.JvmCompilerPipelineKt.runBackend(jvmCompilerPipeline.kt:73)
+	at org.jetbrains.kotlin.cli.jvm.compiler.pipeline.JvmCompilerPipelineLightTreeKt.compileModule(jvmCompilerPipelineLightTree.kt:264)
+	at org.jetbrains.kotlin.cli.jvm.compiler.pipeline.JvmCompilerPipelineLightTreeKt.compileSingleModuleUsingFrontendIrAndLightTree(jvmCompilerPipelineLightTree.kt:231)
+	at org.jetbrains.kotlin.cli.jvm.compiler.pipeline.JvmCompilerPipelineLightTreeKt.compileModulesUsingFrontendIrAndLightTree(jvmCompilerPipelineLightTree.kt:86)
+	at org.jetbrains.kotlin.cli.jvm.K2JVMCompiler.doExecute(K2JVMCompiler.kt:146)
+	at org.jetbrains.kotlin.cli.jvm.K2JVMCompiler.doExecute(K2JVMCompiler.kt:43)
+	at org.jetbrains.kotlin.cli.common.CLICompiler.execImpl(CLICompiler.kt:102)
+	at org.jetbrains.kotlin.cli.common.CLICompiler.exec(CLICompiler.kt:316)
+	at org.jetbrains.kotlin.incremental.IncrementalJvmCompilerRunner.runCompiler(IncrementalJvmCompilerRunner.kt:464)
+	at org.jetbrains.kotlin.incremental.IncrementalJvmCompilerRunner.runCompiler(IncrementalJvmCompilerRunner.kt:73)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.doCompile(IncrementalCompilerRunner.kt:506)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compileImpl(IncrementalCompilerRunner.kt:423)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compileNonIncrementally(IncrementalCompilerRunner.kt:301)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compile(IncrementalCompilerRunner.kt:129)
+	at org.jetbrains.kotlin.daemon.CompileServiceImplBase.execIncrementalCompiler(CompileServiceImpl.kt:683)
+	at org.jetbrains.kotlin.daemon.CompileServiceImplBase.access$execIncrementalCompiler(CompileServiceImpl.kt:91)
+	at org.jetbrains.kotlin.daemon.CompileServiceImpl.compile(CompileServiceImpl.kt:1811)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.rmi/sun.rmi.server.UnicastServerRef.dispatch(UnicastServerRef.java:360)
+	at java.rmi/sun.rmi.transport.Transport$1.run(Transport.java:200)
+	at java.rmi/sun.rmi.transport.Transport$1.run(Transport.java:197)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:714)
+	at java.rmi/sun.rmi.transport.Transport.serviceCall(Transport.java:196)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport.handleMessages(TCPTransport.java:598)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run0(TCPTransport.java:844)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.lambda$run$0(TCPTransport.java:721)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:400)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run(TCPTransport.java:720)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1575)
+Caused by: java.lang.IllegalStateException: Serializer for element of type org.bson.types.ObjectId has not been found
+	at org.jetbrains.kotlinx.serialization.compiler.backend.ir.SerializerSearchUtilKt.findTypeSerializerOrContext(SerializerSearchUtil.kt:84)
+	at org.jetbrains.kotlinx.serialization.compiler.backend.ir.BaseIrGenerator.serializerInstance(BaseIrGenerator.kt:721)
+	at org.jetbrains.kotlinx.serialization.compiler.backend.ir.BaseIrGenerator.serializerInstance$instantiate(BaseIrGenerator.kt:554)
+	at org.jetbrains.kotlinx.serialization.compiler.backend.ir.BaseIrGenerator.serializerInstance(BaseIrGenerator.kt:597)
+	at org.jetbrains.kotlinx.serialization.compiler.backend.ir.BaseIrGenerator.cacheableChildSerializerInstance(BaseIrGenerator.kt:495)
+	at org.jetbrains.kotlinx.serialization.compiler.backend.ir.BaseIrGenerator.createCachedChildSerializers(BaseIrGenerator.kt:467)
+	at org.jetbrains.kotlinx.serialization.compiler.backend.ir.SerializableIrGenerator.<init>(SerializableIrGenerator.kt:60)
+	at org.jetbrains.kotlinx.serialization.compiler.backend.ir.SerializableIrGenerator$Companion.generate(SerializableIrGenerator.kt:399)
+	at org.jetbrains.kotlinx.serialization.compiler.extensions.SerializerClassLowering.lower(SerializationLoweringExtension.kt:146)
+	... 58 more
+
+

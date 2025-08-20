@@ -1,0 +1,37 @@
+package com.config
+
+import io.github.cdimascio.dotenv.dotenv
+
+object ProductionConfig {
+    private val dotenv = dotenv {
+        ignoreIfMissing = true
+        filename = if (System.getenv("ENVIRONMENT") == "production") ".env.production" else ".env"
+    }
+
+    val isProduction = dotenv["ENVIRONMENT"] == "production"
+    
+    // Database Configuration
+    val mongoUri = dotenv["MONGODB_URI"] ?: "mongodb://localhost:27017/realestate_db"
+    val databaseName = dotenv["MONGODB_DATABASE"] ?: "realestate_db"
+    
+    // Security Configuration
+    val corsAllowedHosts = if (isProduction) {
+        listOf(
+            "https://your-domain.com",
+            "https://app.your-domain.com",
+            "https://admin.your-domain.com"
+        )
+    } else {
+        listOf("*") // Development
+    }
+    
+    // Rate Limiting
+    val rateLimitPerMinute = if (isProduction) 30 else 60
+    val authRateLimitPerMinute = if (isProduction) 5 else 10
+    
+    // File Upload
+    val maxFileSize = dotenv["MAX_FILE_SIZE"]?.toLong() ?: (if (isProduction) 5_000_000 else 10_000_000) // 5MB prod, 10MB dev
+    
+    // Logging Level
+    val logLevel = if (isProduction) "WARN" else "INFO"
+}

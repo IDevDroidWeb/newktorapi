@@ -1,0 +1,214 @@
+# 🚀 خطوات النشر للإنتاج
+
+## 1. المتطلبات الأساسية
+
+### MongoDB Cloud (مُوصى به)
+1. إنشاء حساب على https://www.mongodb.com/cloud/atlas
+2. إنشاء cluster مجاني
+3. إنشاء database user
+4. الحصول على connection string
+5. إضافة IP addresses المسموحة (0.0.0.0/0 للتجربة)
+
+### SMS Service (Plivo)
+1. إنشاء حساب على https://www.plivo.com
+2. الحصول على Auth ID و Auth Token
+3. شراء رقم هاتف للإرسال
+
+## 2. إعداد Environment Variables
+
+### ملف .env للإنتاج:
+```env
+# Database
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/realestate_prod
+MONGODB_DATABASE=realestate_prod
+
+# JWT
+JWT_SECRET=your-super-strong-secret-here-change-this-now
+JWT_ISSUER=your-app-name
+JWT_AUDIENCE=your-app-users
+JWT_REALM=your-app
+
+# SMS
+PLIVO_AUTH_ID=your_plivo_auth_id
+PLIVO_AUTH_TOKEN=your_plivo_auth_token
+PLIVO_PHONE_NUMBER=+1234567890
+
+# Server
+PORT=8080
+HOST=0.0.0.0
+ENVIRONMENT=production
+
+# Security
+RATE_LIMIT_PER_MINUTE=30
+```
+
+## 3. خيارات النشر
+
+### خيار 1: Heroku (أسهل للمبتدئين)
+```bash
+# إعداد Heroku
+heroku create your-app-name
+heroku addons:create heroku-postgresql:hobby-dev
+
+# إعداد Environment Variables
+heroku config:set MONGODB_URI="your_mongodb_connection_string"
+heroku config:set JWT_SECRET="your_jwt_secret"
+heroku config:set PLIVO_AUTH_ID="your_plivo_id"
+heroku config:set PLIVO_AUTH_TOKEN="your_plivo_token"
+heroku config:set PLIVO_PHONE_NUMBER="your_phone"
+heroku config:set ENVIRONMENT="production"
+
+# النشر
+git push heroku main
+```
+
+### خيار 2: DigitalOcean Droplet
+```bash
+# إنشاء JAR file
+./gradlew shadowJar
+
+# رفع على السيرفر
+scp build/libs/realestate-all.jar user@your-server:/opt/realestate/
+
+# تشغيل على السيرفر
+java -jar realestate-all.jar
+```
+
+### خيار 3: Docker (موصى به للإنتاج)
+```bash
+# بناء الصورة
+docker build -t realestate-api .
+
+# تشغيل مع Docker Compose
+docker-compose up -d
+
+# أو تشغيل منفرد
+docker run -p 8080:8080 --env-file .env.production realestate-api
+```
+
+## 4. إعداد Database Indexes (مهم للأداء)
+
+### في MongoDB Compass أو Shell:
+```javascript
+// Property search indexes
+db.properties.createIndex({"title": "text", "description": "text"})
+db.properties.createIndex({"countryId": 1, "governorateId": 1})
+db.properties.createIndex({"categoryId": 1})
+db.properties.createIndex({"propertyTypeId": 1})
+db.properties.createIndex({"price": 1})
+db.properties.createIndex({"area": 1})
+db.properties.createIndex({"uploadTime": -1})
+db.properties.createIndex({"featured": 1, "uploadTime": -1})
+db.properties.createIndex({"pinned": 1, "uploadTime": -1})
+db.properties.createIndex({"status": 1})
+
+// User indexes
+db.users.createIndex({"phone": 1}, {"unique": true})
+db.users.createIndex({"email": 1}, {"unique": true})
+db.users.createIndex({"status": 1})
+
+// Location-based search
+db.properties.createIndex({"latitude": 1, "longitude": 1})
+```
+
+## 5. مراقبة الأداء
+
+### Health Check
+تأكد إن `/health` endpoint شغال:
+```bash
+curl https://your-domain.com/health
+```
+
+### Logs Monitoring
+```bash
+# على السيرفر
+tail -f /var/log/realestate/app.log
+
+# أو مع Docker
+docker logs -f realestate-api
+```
+
+## 6. أمان إضافي للإنتاج
+
+### SSL Certificate (Let's Encrypt)
+```bash
+sudo certbot --nginx -d your-domain.com -d api.your-domain.com
+```
+
+### Firewall Rules
+```bash
+# فتح البورتات المطلوبة فقط
+sudo ufw allow 22    # SSH
+sudo ufw allow 80    # HTTP
+sudo ufw allow 443   # HTTPS
+sudo ufw enable
+```
+
+### Database Security
+- استخدم strong passwords
+- فعّل authentication في MongoDB
+- قيّد الـ IP addresses
+- فعّل SSL/TLS للاتصال
+
+## 7. Backup Strategy
+
+### MongoDB Backup
+```bash
+# يومياً
+mongodump --uri="your_mongodb_uri" --out=/backups/$(date +%Y%m%d)
+
+# أو استخدم MongoDB Atlas automated backups
+```
+
+### File Uploads Backup
+```bash
+# رفع الملفات لـ cloud storage مثل AWS S3
+```
+
+## 8. تحسين الأداء
+
+### Caching (اختياري)
+إضافة Redis للـ caching:
+```bash
+# في Docker Compose
+redis:
+  image: redis:alpine
+  ports:
+    - "6379:6379"
+```
+
+### Load Testing
+```bash
+# استخدم tools مثل Apache Bench
+ab -n 1000 -c 10 https://your-domain.com/api/v1/properties/search
+```
+
+## 9. المتابعة والصيانة
+
+### تحديثات دورية
+- تحديث dependencies
+- مراجعة security patches
+- مراقبة الـ logs للأخطاء
+
+### Scaling عند الحاجة
+- إضافة load balancer
+- استخدام multiple instances
+- تحسين database queries
+
+---
+
+## 🎯 Quick Start للإنتاج
+
+```bash
+# 1. إعداد البيئة
+cp .env.production .env
+# Edit .env with your production values
+
+# 2. بناء المشروع
+./gradlew shadowJar
+
+# 3. تشغيل للاختبار المحلي
+java -jar build/libs/realestate-all.jar
+
+# 4. إذا everything OK, deploy to your chosen platform
+```

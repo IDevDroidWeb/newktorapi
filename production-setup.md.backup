@@ -1,0 +1,194 @@
+# إعداد المشروع للإنتاج
+
+## 🗄️ MongoDB للإنتاج
+
+### خيار 1: MongoDB Atlas (Cloud - مُوصى به)
+1. إنشاء حساب على https://www.mongodb.com/cloud/atlas
+2. إنشاء cluster مجاني
+3. الحصول على Connection String:
+   ```
+   mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/realestate_prod
+   ```
+
+### خيار 2: MongoDB على VPS/Server
+```bash
+# Ubuntu/Debian
+sudo apt-get update
+sudo apt-get install -y mongodb-org
+
+# تشغيل MongoDB
+sudo systemctl start mongod
+sudo systemctl enable mongod
+
+# الحماية
+sudo ufw allow 27017
+```
+
+### خيار 3: Docker (للسيرفر)
+```bash
+# إنشاء MongoDB container
+docker run -d \
+  --name mongodb-prod \
+  -p 27017:27017 \
+  -v mongodb_data:/data/db \
+  -e MONGO_INITDB_ROOT_USERNAME=admin \
+  -e MONGO_INITDB_ROOT_PASSWORD=strongpassword123 \
+  mongo:latest
+
+# Connection string
+mongodb://admin:strongpassword123@your-server-ip:27017/realestate_prod?authSource=admin
+```
+
+## 🔒 إعدادات الأمان
+
+### Environment Variables للإنتاج
+```env
+# Database - Production
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/realestate_prod
+MONGODB_DATABASE=realestate_prod
+
+# JWT - Strong Keys
+JWT_SECRET=your-super-strong-256-bit-secret-key-here-change-this
+JWT_ISSUER=your-app-name
+JWT_AUDIENCE=your-app-clients
+JWT_REALM=your-app-realm
+
+# SMS Service - Real Credentials
+PLIVO_AUTH_ID=your_real_plivo_auth_id
+PLIVO_AUTH_TOKEN=your_real_plivo_auth_token  
+PLIVO_PHONE_NUMBER=+1234567890
+
+# Server - Production
+PORT=8080
+HOST=0.0.0.0
+ENVIRONMENT=production
+
+# Security
+RATE_LIMIT_PER_MINUTE=30
+```
+
+## 🚀 Deployment Options
+
+### خيار 1: Heroku (سهل للمبتدئين)
+```bash
+# إنشاء Procfile
+echo "web: java -jar build/libs/realestate-all.jar" > Procfile
+
+# Deploy
+heroku create your-app-name
+git push heroku main
+```
+
+### خيار 2: DigitalOcean/AWS/Azure
+```bash
+# Build JAR file
+./gradlew shadowJar
+
+# Upload to server
+scp build/libs/realestate-all.jar user@your-server:/opt/realestate/
+
+# Run on server
+java -jar realestate-all.jar
+```
+
+### خيار 3: Docker
+```dockerfile
+FROM openjdk:17-jdk-slim
+COPY build/libs/realestate-all.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "/app.jar"]
+```
+
+## 📱 SMS Service Setup (Plivo)
+
+### 1. إنشاء حساب Plivo
+- سجل على https://www.plivo.com
+- احصل على Auth ID & Auth Token
+- اشتري رقم هاتف
+
+### 2. التكامل مع المشروع
+المشروع جاهز للتكامل، فقط ضع البيانات في .env
+
+## 🌐 Domain & SSL
+
+### Domain Setup
+```bash
+# ربط Domain بالسيرفر
+# A Record: your-domain.com -> Server IP
+# CNAME: api.your-domain.com -> your-domain.com
+```
+
+### SSL Certificate (Let's Encrypt)
+```bash
+sudo apt install certbot
+sudo certbot --nginx -d api.your-domain.com
+```
+
+## 📊 Monitoring & Analytics
+
+### Logging
+```kotlin
+// إضافة في Application.kt
+install(CallLogging) {
+    level = Level.INFO
+    format { call ->
+        "${call.request.httpMethod.value} ${call.request.uri} - ${call.response.status()}"
+    }
+}
+```
+
+### Health Checks
+المشروع يحتوي على `/health` endpoint
+
+## 🔄 CI/CD Pipeline
+
+### GitHub Actions
+```yaml
+name: Deploy
+on:
+  push:
+    branches: [main]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-java@v2
+      with:
+        java-version: '17'
+    - run: ./gradlew build
+    - run: ./gradlew shadowJar
+    # Deploy steps here
+```
+
+## 📈 Scaling Considerations
+
+### Database Indexing
+```javascript
+// في MongoDB
+db.properties.createIndex({"title": "text", "description": "text"})
+db.properties.createIndex({"countryId": 1, "governorateId": 1})
+db.properties.createIndex({"price": 1})
+db.properties.createIndex({"uploadTime": -1})
+db.users.createIndex({"phone": 1}, {"unique": true})
+db.users.createIndex({"email": 1}, {"unique": true})
+```
+
+### Load Balancing
+```nginx
+upstream realestate_app {
+    server 127.0.0.1:8080;
+    server 127.0.0.1:8081;  # للتوسع
+}
+
+server {
+    listen 80;
+    server_name api.your-domain.com;
+    
+    location / {
+        proxy_pass http://realestate_app;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```

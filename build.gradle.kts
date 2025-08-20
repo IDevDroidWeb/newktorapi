@@ -4,17 +4,17 @@ val logback_version: String by project
 val mongodb_version: String by project
 
 plugins {
-    kotlin("jvm") version "1.9.10"
-    id("io.ktor.plugin") version "2.3.4"
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.ktor)
     id("org.jetbrains.kotlin.plugin.serialization") version "1.9.10"
     application
 }
 
-group = "com.realestate"
+group = "com"
 version = "1.0.0"
 
 application {
-    mainClass.set("com.realestate.ApplicationKt")
+    mainClass = "io.ktor.server.netty.EngineMain"
     val isDevelopment: Boolean = project.ext.has("development")
     applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")
 }

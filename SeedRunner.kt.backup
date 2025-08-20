@@ -1,0 +1,12 @@
+import com.config.DatabaseConfig
+import com.seeders.DatabaseSeeder
+import kotlinx.coroutines.runBlocking
+
+fun main() {
+    println("Starting manual seeding...")
+    runBlocking {
+        DatabaseConfig.init()
+        DatabaseSeeder.seedAll()
+    }
+    println("Seeding completed!")
+}
