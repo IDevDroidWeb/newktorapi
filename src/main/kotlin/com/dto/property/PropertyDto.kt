@@ -34,7 +34,7 @@ data class PropertyResponseDto(
 
 @Serializable
 data class CreatePropertyRequest(
-    val images: List<String>,
+    val images: List<String> = emptyList(),
     val video: String? = null,
     val title: String,
     val description: String,
@@ -77,7 +77,8 @@ data class UpdatePropertyRequest(
     val featured: Boolean? = null,
     val pinned: Boolean? = null,
     val status: String? = null,
-    val sold: Boolean? = null
+    val sold: Boolean? = null,
+    val replaceImages: Boolean = false // If true, replace all images; if false, add to existing
 )
 
 @Serializable

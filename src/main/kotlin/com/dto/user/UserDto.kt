@@ -29,6 +29,7 @@ data class UserResponseDto(
 data class UpdateUserRequest(
     val name: String? = null,
     val email: String? = null,
+    val picture: String? = null,
     val dateOfBirth: String? = null,
     val gender: String? = null,
     val address: String? = null,

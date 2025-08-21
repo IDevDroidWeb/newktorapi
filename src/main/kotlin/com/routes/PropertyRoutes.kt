@@ -1,6 +1,8 @@
 package com.routes
 
 import com.dto.property.*
+import com.dto.upload.*
+import com.services.FileUploadService
 import com.services.PropertyService
 import com.utils.Constants
 import com.utils.ResponseWrapper.respondError
@@ -8,12 +10,16 @@ import com.utils.ResponseWrapper.respondPaginated
 import com.utils.ResponseWrapper.respondSuccess
 import com.utils.getUserId
 import com.utils.toObjectId
+import io.ktor.http.content.PartData
+import io.ktor.http.content.forEachPart
 import io.ktor.server.auth.*
 import io.ktor.server.request.*
 import io.ktor.server.routing.*
+import kotlinx.serialization.json.Json
 
 fun Route.propertyRoutes() {
     val propertyService = PropertyService()
+    val fileUploadService = FileUploadService()
 
     route("/properties") {
         // Public routes
@@ -87,14 +93,85 @@ fun Route.propertyRoutes() {
             }
         }
 
-        // Protected routes
+        // Protected routes with file upload support
         authenticate("auth-jwt") {
             post {
                 try {
                     val userId = call.getUserId()
-                    val request = call.receive<CreatePropertyRequest>()
-                    val property = propertyService.createProperty(request, userId)
-                    call.respondSuccess(property, "Property created successfully")
+                    val multipart = call.receiveMultipart()
+
+                    var propertyData: PropertyUploadRequest? = null
+                    val imageFiles = mutableListOf<PartData.FileItem>()
+                    var videoFile: PartData.FileItem? = null
+
+                    // Parse multipart data
+                    multipart.forEachPart { part ->
+                        when (part) {
+                            is PartData.FormItem -> {
+                                if (part.name == "data") {
+                                    propertyData = Json.decodeFromString<PropertyUploadRequest>(part.value)
+                                }
+                            }
+                            is PartData.FileItem -> {
+                                when (part.name) {
+                                    "images" -> imageFiles.add(part)
+                                    "video" -> videoFile = part
+                                }
+                            }
+                            else -> {}
+                        }
+                        part.dispose()
+                    }
+
+                    // Validate required data
+                    val data = propertyData ?: throw IllegalArgumentException("Property data is required")
+                    if (imageFiles.isEmpty()) {
+                        throw IllegalArgumentException("At least one image is required")
+                    }
+
+                    // Upload images
+                    val imageUploadResult = fileUploadService.uploadFiles(imageFiles, UploadContext.PROPERTY_IMAGES)
+                    if (imageUploadResult.isFailure) {
+                        throw IllegalArgumentException("Image upload failed: ${imageUploadResult.exceptionOrNull()?.message}")
+                    }
+                    val uploadedImages = imageUploadResult.getOrThrow()
+
+                    // Upload video if provided
+                    var uploadedVideo: UploadedFile? = null
+                    if (videoFile != null) {
+                        val videoUploadResult = fileUploadService.uploadSingleFile(videoFile!!, UploadContext.PROPERTY_VIDEO)
+                        if (videoUploadResult.isFailure) {
+                            // Rollback images
+                            fileUploadService.deleteFiles(uploadedImages.map { it.url })
+                            throw IllegalArgumentException("Video upload failed: ${videoUploadResult.exceptionOrNull()?.message}")
+                        }
+                        uploadedVideo = videoUploadResult.getOrThrow()
+                    }
+
+                    // Create property request with uploaded file URLs
+                    val createRequest = CreatePropertyRequest(
+                        images = uploadedImages.map { it.url },
+                        video = uploadedVideo?.url,
+                        title = data.title,
+                        description = data.description,
+                        categoryId = data.categoryId,
+                        categoryName = data.categoryName,
+                        propertyTypeId = data.propertyTypeId,
+                        propertyTypeName = data.propertyTypeName,
+                        specifications = data.specifications,
+                        area = data.area,
+                        rooms = data.rooms,
+                        baths = data.baths,
+                        price = data.price,
+                        locationString = data.locationString,
+                        latitude = data.latitude,
+                        longitude = data.longitude,
+                        countryId = data.countryId,
+                        governorateId = data.governorateId
+                    )
+
+                    val property = propertyService.createProperty(createRequest, userId)
+                    call.respondSuccess(property, "Property created successfully with ${uploadedImages.size} images${if (uploadedVideo != null) " and 1 video" else ""}")
                 } catch (e: Exception) {
                     call.respondError(e.message ?: "Failed to create property")
                 }
@@ -103,10 +180,75 @@ fun Route.propertyRoutes() {
             put("/{id}") {
                 try {
                     val userId = call.getUserId()
-                    val id = call.parameters["id"]
+                    val propertyId = call.parameters["id"]
                         ?: throw IllegalArgumentException("Invalid property ID")
-                    val request = call.receive<UpdatePropertyRequest>()
-                    val property = propertyService.updateProperty(id, request, userId)
+
+                    val multipart = call.receiveMultipart()
+
+                    var updateData: UpdatePropertyRequest? = null
+                    val newImageFiles = mutableListOf<PartData.FileItem>()
+                    var newVideoFile: PartData.FileItem? = null
+
+                    // Parse multipart data
+                    multipart.forEachPart { part ->
+                        when (part) {
+                            is PartData.FormItem -> {
+                                if (part.name == "data") {
+                                    updateData = Json.decodeFromString<UpdatePropertyRequest>(part.value)
+                                }
+                            }
+                            is PartData.FileItem -> {
+                                when (part.name) {
+                                    "newImages" -> newImageFiles.add(part)
+                                    "newVideo" -> newVideoFile = part
+                                }
+                            }
+                            else -> {}
+                        }
+                        part.dispose()
+                    }
+
+                    val data = updateData ?: throw IllegalArgumentException("Update data is required")
+
+                    // Upload new images if provided
+                    var newImageUrls: List<String> = emptyList()
+                    if (newImageFiles.isNotEmpty()) {
+                        val imageUploadResult = fileUploadService.uploadFiles(newImageFiles, UploadContext.PROPERTY_IMAGES)
+                        if (imageUploadResult.isFailure) {
+                            throw IllegalArgumentException("Image upload failed: ${imageUploadResult.exceptionOrNull()?.message}")
+                        }
+                        newImageUrls = imageUploadResult.getOrThrow().map { it.url }
+                    }
+
+                    // Upload new video if provided
+                    var newVideoUrl: String? = null
+                    if (newVideoFile != null) {
+                        val videoUploadResult = fileUploadService.uploadSingleFile(newVideoFile!!, UploadContext.PROPERTY_VIDEO)
+                        if (videoUploadResult.isFailure) {
+                            // Rollback new images
+                            if (newImageUrls.isNotEmpty()) {
+                                fileUploadService.deleteFiles(newImageUrls)
+                            }
+                            throw IllegalArgumentException("Video upload failed: ${videoUploadResult.exceptionOrNull()?.message}")
+                        }
+                        newVideoUrl = videoUploadResult.getOrThrow().url
+                    }
+
+                    // Merge new images with existing ones (if keeping existing)
+                    val finalImages = when {
+                        newImageUrls.isNotEmpty() && data.replaceImages == true -> newImageUrls
+                        newImageUrls.isNotEmpty() -> (data.images ?: emptyList()) + newImageUrls
+                        else -> data.images ?: emptyList()
+                    }
+
+                    val finalVideo = newVideoUrl ?: data.video
+
+                    val finalUpdateRequest = data.copy(
+                        images = finalImages.takeIf { it.isNotEmpty() },
+                        video = finalVideo
+                    )
+
+                    val property = propertyService.updateProperty(propertyId, finalUpdateRequest, userId)
                     call.respondSuccess(property, "Property updated successfully")
                 } catch (e: Exception) {
                     call.respondError(e.message ?: "Failed to update property")

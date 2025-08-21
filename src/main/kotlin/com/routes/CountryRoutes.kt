@@ -1,30 +1,20 @@
 package com.routes
 
+import com.dto.upload.*
 import com.services.CountryService
+import com.services.FileUploadService
 import com.utils.ResponseWrapper.respondError
 import com.utils.ResponseWrapper.respondSuccess
 import com.utils.toObjectId
+import io.ktor.http.content.*
 import io.ktor.server.auth.*
 import io.ktor.server.request.*
 import io.ktor.server.routing.*
-import kotlinx.serialization.Serializable
-
-@Serializable
-data class CreateCountryRequest(
-    val nameAr: String,
-    val nameEn: String,
-    val flagImage: String
-)
-
-@Serializable
-data class UpdateCountryRequest(
-    val nameAr: String? = null,
-    val nameEn: String? = null,
-    val flagImage: String? = null
-)
+import kotlinx.serialization.json.Json
 
 fun Route.countryRoutes() {
     val countryService = CountryService()
+    val fileUploadService = FileUploadService()
 
     route("/countries") {
         get {
@@ -50,13 +40,45 @@ fun Route.countryRoutes() {
         authenticate("auth-jwt") {
             post {
                 try {
-                    val request = call.receive<CreateCountryRequest>()
+                    val multipart = call.receiveMultipart()
+
+                    var countryData: CountryUploadRequest? = null
+                    var flagFile: PartData.FileItem? = null
+
+                    multipart.forEachPart { part ->
+                        when (part) {
+                            is PartData.FormItem -> {
+                                if (part.name == "data") {
+                                    countryData = Json.decodeFromString<CountryUploadRequest>(part.value)
+                                }
+                            }
+                            is PartData.FileItem -> {
+                                if (part.name == "flagImage") {
+                                    flagFile = part
+                                }
+                            }
+                            else -> {}
+                        }
+                        part.dispose()
+                    }
+
+                    val data = countryData ?: throw IllegalArgumentException("Country data is required")
+                    val flag = flagFile ?: throw IllegalArgumentException("Flag image is required")
+
+                    // Upload flag image
+                    val uploadResult = fileUploadService.uploadSingleFile(flag, UploadContext.COUNTRY_FLAG)
+                    if (uploadResult.isFailure) {
+                        throw IllegalArgumentException("Flag image upload failed: ${uploadResult.exceptionOrNull()?.message}")
+                    }
+
+                    val uploadedFlag = uploadResult.getOrThrow()
+
                     val country = countryService.createCountry(
-                        request.nameAr,
-                        request.nameEn,
-                        request.flagImage
+                        data.nameAr,
+                        data.nameEn,
+                        uploadedFlag.url
                     )
-                    call.respondSuccess(country, "Country created successfully")
+                    call.respondSuccess(country, "Country created successfully with flag image")
                 } catch (e: Exception) {
                     call.respondError(e.message ?: "Failed to create country")
                 }
@@ -66,16 +88,42 @@ fun Route.countryRoutes() {
                 try {
                     val id = call.parameters["id"]
                         ?: throw IllegalArgumentException("Invalid country ID")
-                    val request = call.receive<UpdateCountryRequest>()
+
+                    val multipart = call.receiveMultipart()
+
+                    var updateData: CountryUploadRequest? = null
+                    var newFlagFile: PartData.FileItem? = null
+
+                    multipart.forEachPart { part ->
+                        when (part) {
+                            is PartData.FormItem -> {
+                                if (part.name == "data") {
+                                    updateData = Json.decodeFromString<CountryUploadRequest>(part.value)
+                                }
+                            }
+                            is PartData.FileItem -> {
+                                if (part.name == "flagImage") {
+                                    newFlagFile = part
+                                }
+                            }
+                            else -> {}
+                        }
+                        part.dispose()
+                    }
+
+                    val data = updateData ?: throw IllegalArgumentException("Update data is required")
 
                     val updates = mutableMapOf<String, Any>()
-                    request.nameAr?.let { updates["nameAr"] = it }
-                    request.nameEn?.let { updates["nameEn"] = it }
-                    request.flagImage?.let { updates["flagImage"] = it }
+                    updates["nameAr"] = data.nameAr
+                    updates["nameEn"] = data.nameEn
 
-                    if (updates.isEmpty()) {
-                        call.respondError("No fields to update")
-                        return@put
+                    // Upload new flag if provided
+                    if (newFlagFile != null) {
+                        val uploadResult = fileUploadService.uploadSingleFile(newFlagFile!!, UploadContext.COUNTRY_FLAG)
+                        if (uploadResult.isFailure) {
+                            throw IllegalArgumentException("Flag image upload failed: ${uploadResult.exceptionOrNull()?.message}")
+                        }
+                        updates["flagImage"] = uploadResult.getOrThrow().url
                     }
 
                     val country = countryService.updateCountry(id, updates)

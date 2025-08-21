@@ -24,5 +24,6 @@ fun Application.module() {
     configureSerialization()
     configureHTTP()
     configureMonitoring()
+    configureMultipart() // NEW: Add multipart support
     configureRouting()
 }
