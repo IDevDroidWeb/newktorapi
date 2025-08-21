@@ -36,7 +36,7 @@ dependencies {
     implementation("io.ktor:ktor-serialization-gson-jvm")
 
     // Multipart Support (NEW)
-    implementation("io.ktor:ktor-server-multipart-jvm")
+    //implementation("io.ktor:ktor-server-multipart-jvm")
 
     // Authentication & Security
     implementation("io.ktor:ktor-server-auth-jvm")
@@ -49,6 +49,14 @@ dependencies {
     implementation("io.ktor:ktor-server-call-logging-jvm")
     implementation("io.ktor:ktor-server-status-pages-jvm")
     implementation("io.ktor:ktor-server-rate-limit-jvm")
+
+    // Ktor Client for HTTP requests
+    implementation("io.ktor:ktor-client-core:${ktor_version}")
+    implementation("io.ktor:ktor-client-cio:${ktor_version}")
+    implementation("io.ktor:ktor-client-content-negotiation:${ktor_version}")
+
+    // Validation
+    implementation("io.konform:konform:0.4.0")
 
     // Partial Content Support for File Serving (NEW)
     implementation("io.ktor:ktor-server-partial-content-jvm")
@@ -102,11 +110,6 @@ dependencies {
     implementation("io.ktor:ktor-server-rate-limit:$ktor_version")
     implementation("io.ktor:ktor-server-swagger:$ktor_version")
 
-    // Ktor Client for HTTP requests
-    implementation("io.ktor:ktor-client-core:$ktor_version")
-    implementation("io.ktor:ktor-client-cio:$ktor_version")
-    implementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
-
     // MongoDB
     implementation("org.mongodb:mongodb-driver-kotlin-coroutine:$mongodb_version")
     implementation("org.mongodb:bson-kotlinx:$mongodb_version")
@@ -114,9 +117,6 @@ dependencies {
     // Security
     implementation("org.mindrot:jbcrypt:0.4")
     implementation("com.auth0:java-jwt:4.4.0")
-
-    // Validation
-    implementation("io.konform:konform:0.4.0")
 
     // Environment Variables
     implementation("io.github.cdimascio:dotenv-kotlin:6.4.1")

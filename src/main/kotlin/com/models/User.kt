@@ -11,7 +11,7 @@ import java.time.LocalDateTime
 data class User(
     @BsonId @Contextual
     val id: String = ObjectId().toHexString(),
-    val picture: String? = null,
+    val profilePicture: String? = null,
     val name: String,
     val phone: String,
     val email: String,

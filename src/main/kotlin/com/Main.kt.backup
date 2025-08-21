@@ -12,5 +12,5 @@ fun main(args: Array<String>) {
         return
     }
 
-    com.main()
+    com.test.main()
 }

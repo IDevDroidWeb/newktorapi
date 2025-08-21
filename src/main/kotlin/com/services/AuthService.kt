@@ -131,7 +131,7 @@ class AuthService {
             phone = pending.phone,
             email = pending.email!!,
             passwordHash = pending.passwordHash!!,
-            picture = pending.profilePicture,
+            profilePicture = pending.profilePicture,
             isPhoneVerified = true,
             status = Constants.USER_STATUS_ACTIVE
         )
@@ -156,7 +156,7 @@ class AuthService {
 
     private fun User.toResponseDto() = UserResponseDto(
         id = id.toString(),
-        picture = picture,
+        profilePicture = profilePicture,
         name = name,
         phone = phone,
         email = email,

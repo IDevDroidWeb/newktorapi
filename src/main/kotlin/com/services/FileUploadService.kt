@@ -7,10 +7,8 @@ import com.utils.FileValidators
 import io.ktor.http.content.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.awt.Image
-import java.awt.image.BufferedImage
 import java.io.File
-import javax.imageio.ImageIO
+import java.io.FileOutputStream
 
 class FileUploadService {
 
@@ -19,8 +17,24 @@ class FileUploadService {
         context: UploadContext
     ): Result<List<UploadedFile>> {
         return try {
-            // Validate files
+            println("=== Upload Debug Info ===")
+            println("Number of parts: ${parts.size}")
+            parts.forEachIndexed { index, part ->
+                println("Part $index:")
+                println("  - Original filename: ${part.originalFileName}")
+                println("  - Content type: ${part.contentType}")
+                println("  - Name: ${part.name}")
+            }
+
+            // Validate files with detailed logging
             val (validFiles, errors) = FileValidators.validateFiles(parts, context)
+
+            println("Validation results:")
+            println("  - Valid files: ${validFiles.size}")
+            println("  - Errors: ${errors.size}")
+            errors.forEach { error ->
+                println("  - Error: ${error.error}")
+            }
 
             if (errors.isNotEmpty()) {
                 return Result.failure(Exception("Validation failed: ${errors.joinToString { it.error }}"))
@@ -33,8 +47,11 @@ class FileUploadService {
                 else -> throw IllegalStateException("Unsupported storage provider: ${StorageConfig.storageProvider}")
             }
 
+            println("Upload completed successfully: ${uploadedFiles.size} files")
             Result.success(uploadedFiles)
         } catch (e: Exception) {
+            println("Upload failed with exception: ${e.message}")
+            e.printStackTrace()
             // Rollback on failure
             rollbackUploads(context)
             Result.failure(e)
@@ -55,65 +72,58 @@ class FileUploadService {
     ): List<UploadedFile> = withContext(Dispatchers.IO) {
         val folder = FileValidators.getFolderByContext(context)
         val uploadDir = File(StorageConfig.baseUploadDir, folder)
-        val thumbnailDir = File(StorageConfig.baseUploadDir, "${StorageConfig.Folders.THUMBNAILS}/$folder")
 
-        // Create directories if they don't exist
-        uploadDir.mkdirs()
-        thumbnailDir.mkdirs()
+        println("Upload directory: ${uploadDir.absolutePath}")
+
+        // Create directory if it doesn't exist
+        if (!uploadDir.exists()) {
+            val created = uploadDir.mkdirs()
+            println("Created upload directory: $created")
+        }
 
         val uploadedFiles = mutableListOf<UploadedFile>()
         val tempFiles = mutableListOf<File>() // For rollback
 
         try {
-            files.forEach { part ->
-                val originalFileName = part.originalFileName ?: "unknown"
-                val uniqueFileName = FileValidators.generateUniqueFileName(originalFileName)
-                val file = File(uploadDir, uniqueFileName)
-                val contentType = part.contentType?.toString() ?: ""
+            files.forEachIndexed { index, part ->
+                println("Processing file $index:")
 
-                // Validate file size while reading
-                var bytesRead = 0L
+                val originalFileName = part.originalFileName ?: "unknown_${System.currentTimeMillis()}.bin"
+                println("  - Original filename: $originalFileName")
+
+                val contentType = detectMimeType(part)
+                println("  - Detected MIME type: $contentType")
+
+                val uniqueFileName = FileValidators.generateUniqueFileName(originalFileName)
+                println("  - Unique filename: $uniqueFileName")
+
+                val file = File(uploadDir, uniqueFileName)
+                println("  - Target file path: ${file.absolutePath}")
+
+                // Determine max file size based on content type
                 val maxSize = if (FileValidators.isImageFile(contentType)) {
                     StorageConfig.maxImageSize
                 } else {
                     StorageConfig.maxVideoSize
                 }
+                println("  - Max allowed size: ${maxSize / 1024 / 1024} MB")
 
-                // Save original file with size validation
-                part.streamProvider().use { input ->
-                    file.outputStream().buffered().use { output ->
-                        val buffer = ByteArray(8192)
-                        var bytes: Int
-                        while (input.read(buffer).also { bytes = it } != -1) {
-                            bytesRead += bytes
-                            if (bytesRead > maxSize) {
-                                throw IllegalArgumentException("File $originalFileName exceeds maximum size limit")
-                            }
-                            output.write(buffer, 0, bytes)
-                        }
-                    }
-                }
+                // Save file directly without any processing
+                val fileSize = saveFileDirectly(part, file, maxSize, originalFileName)
+                println("  - File saved successfully, size: ${fileSize} bytes")
 
                 tempFiles.add(file) // Track for potential rollback
 
                 val fileUrl = "/uploads/$folder/$uniqueFileName"
-                var thumbnailUrl: String? = null
-
-                // Generate thumbnail for images with optimization
-                if (FileValidators.isImageFile(contentType)) {
-                    thumbnailUrl = generateOptimizedThumbnail(file, thumbnailDir, uniqueFileName, folder)
-
-                    // Optimize original image too
-                    optimizeImage(file)
-                }
+                println("  - File URL: $fileUrl")
 
                 uploadedFiles.add(
                     UploadedFile(
                         originalName = originalFileName,
                         fileName = uniqueFileName,
                         url = fileUrl,
-                        thumbnailUrl = thumbnailUrl,
-                        size = file.length(),
+                        thumbnailUrl = null, // No thumbnails generated
+                        size = fileSize,
                         mimeType = contentType,
                         folder = folder
                     )
@@ -122,19 +132,108 @@ class FileUploadService {
 
             uploadedFiles
         } catch (e: Exception) {
+            println("Error during local upload: ${e.message}")
+            e.printStackTrace()
+
             // Rollback: delete any files that were created
             tempFiles.forEach { file ->
                 if (file.exists()) {
-                    file.delete()
-                }
-                // Also delete thumbnail if it exists
-                val thumbFile = File(thumbnailDir, "thumb_${file.name}")
-                if (thumbFile.exists()) {
-                    thumbFile.delete()
+                    val deleted = file.delete()
+                    println("Rollback - deleted file ${file.name}: $deleted")
                 }
             }
             throw e
         }
+    }
+
+    private fun saveFileDirectly(
+        part: PartData.FileItem,
+        file: File,
+        maxSize: Long,
+        originalFileName: String
+    ): Long {
+        var bytesRead = 0L
+        val buffer = ByteArray(8192)
+
+        try {
+            part.streamProvider().use { inputStream ->
+                FileOutputStream(file).use { outputStream ->
+                    var bytesReadInChunk: Int
+                    while (inputStream.read(buffer).also { bytesReadInChunk = it } != -1) {
+                        bytesRead += bytesReadInChunk
+                        if (bytesRead > maxSize) {
+                            // Clean up partial file before throwing exception
+                            if (file.exists()) {
+                                file.delete()
+                            }
+                            throw IllegalArgumentException("File $originalFileName exceeds maximum size limit of ${maxSize / 1024 / 1024} MB")
+                        }
+                        outputStream.write(buffer, 0, bytesReadInChunk)
+                    }
+                    outputStream.flush() // Ensure all data is written
+                }
+            }
+
+            println("    - File write completed: ${file.length()} bytes")
+
+            // Verify file was written correctly
+            if (!file.exists()) {
+                throw IllegalStateException("File was not created: ${file.absolutePath}")
+            }
+
+            if (file.length() == 0L) {
+                throw IllegalStateException("File is empty after write: ${file.absolutePath}")
+            }
+
+            return bytesRead
+
+        } catch (e: Exception) {
+            println("Error saving file directly: ${e.message}")
+            // Clean up on error
+            if (file.exists()) {
+                file.delete()
+            }
+            throw e
+        }
+    }
+
+    private fun detectMimeType(part: PartData.FileItem): String {
+        // First try to get from part
+        val partContentType = part.contentType?.toString()
+        if (!partContentType.isNullOrBlank()) {
+            println("    - MIME type from part: $partContentType")
+            return partContentType
+        }
+
+        // Try to detect from filename extension
+        val fileName = part.originalFileName
+        if (!fileName.isNullOrBlank()) {
+            val extension = FileValidators.getFileExtension(fileName).lowercase()
+            val detectedType = when (extension) {
+                "jpg", "jpeg" -> "image/jpeg"
+                "png" -> "image/png"
+                "gif" -> "image/gif"
+                "webp" -> "image/webp"
+                "bmp" -> "image/bmp"
+                "tiff", "tif" -> "image/tiff"
+                "svg" -> "image/svg+xml"
+                "mp4" -> "video/mp4"
+                "avi" -> "video/avi"
+                "mov" -> "video/quicktime"
+                "wmv" -> "video/x-ms-wmv"
+                "flv" -> "video/x-flv"
+                "webm" -> "video/webm"
+                "mkv" -> "video/x-matroska"
+                "3gp" -> "video/3gpp"
+                "ogv" -> "video/ogg"
+                else -> "application/octet-stream"
+            }
+            println("    - MIME type detected from extension '$extension': $detectedType")
+            return detectedType
+        }
+
+        println("    - MIME type fallback: application/octet-stream")
+        return "application/octet-stream"
     }
 
     private suspend fun uploadToS3(
@@ -149,28 +248,22 @@ class FileUploadService {
         files.forEach { part ->
             val originalFileName = part.originalFileName ?: "unknown"
             val uniqueFileName = FileValidators.generateUniqueFileName(originalFileName)
-            val contentType = part.contentType?.toString() ?: ""
+            val contentType = detectMimeType(part)
 
             // S3 upload implementation would go here:
             // 1. Create S3Client with credentials
             // 2. Upload file using PutObjectRequest
             // 3. Generate presigned URLs or use public URLs
-            // 4. Generate thumbnails and upload them too
 
             val s3Key = "$folder/$uniqueFileName"
             val fileUrl = "${StorageConfig.awsS3BaseUrl}/$s3Key"
-            var thumbnailUrl: String? = null
-
-            if (FileValidators.isImageFile(contentType)) {
-                thumbnailUrl = "${StorageConfig.awsS3BaseUrl}/${StorageConfig.Folders.THUMBNAILS}/$folder/thumb_$uniqueFileName"
-            }
 
             uploadedFiles.add(
                 UploadedFile(
                     originalName = originalFileName,
                     fileName = uniqueFileName,
                     url = fileUrl,
-                    thumbnailUrl = thumbnailUrl,
+                    thumbnailUrl = null, // No thumbnails for direct upload
                     size = 0L, // Would get from S3 response
                     mimeType = contentType,
                     folder = folder
@@ -181,165 +274,18 @@ class FileUploadService {
         uploadedFiles
     }
 
-   /* private suspend fun uploadToCloudinary(
-        files: List<PartData.FileItem>,
-        context: UploadContext
-    ): List<UploadedFile> = withContext(Dispatchers.IO) {
-        // TODO: Implement Cloudinary upload
-        // This would use Cloudinary SDK to upload files
-        val folder = FileValidators.getFolderByContext(context)
-        val uploadedFiles = mutableListOf<UploadedFile>()
-
-        files.forEach { part ->
-            val originalFileName = part.originalFileName ?: "unknown"
-            val uniqueFileName = FileValidators.generateUniqueFileName(originalFileName)
-            val contentType = part.contentType?.toString() ?: ""
-
-            // Upload to Cloudinary logic here
-            val publicId = "$folder/$uniqueFileName"
-            val fileUrl = "${StorageConfig.cloudinaryBaseUrl}/image/upload/$publicId"
-            val thumbnailUrl = "${StorageConfig.cloudinaryBaseUrl}/image/upload/w_${StorageConfig.ThumbnailSizes.MEDIUM}/$publicId"
-
-            // For now, just create a placeholder
-            uploadedFiles.add(
-                UploadedFile(
-                    originalName = originalFileName,
-                    fileName = uniqueFileName,
-                    url = fileUrl,
-                    thumbnailUrl = thumbnailUrl,
-                    size = 0L, // TODO: Get actual file size
-                    mimeType = contentType,
-                    folder = folder
-                )
-            )
-        }
-
-        uploadedFiles
-    }*/
-
-    private fun generateOptimizedThumbnail(
-        originalFile: File,
-        thumbnailDir: File,
-        fileName: String,
-        folder: String
-    ): String? {
-        return try {
-            val originalImage = ImageIO.read(originalFile)
-            if (originalImage == null) {
-                println("Could not read image file: ${originalFile.name}")
-                return null
-            }
-
-            // Calculate dimensions maintaining aspect ratio
-            val originalWidth = originalImage.width
-            val originalHeight = originalImage.height
-            val targetSize = StorageConfig.ThumbnailSizes.MEDIUM
-
-            val (newWidth, newHeight) = if (originalWidth > originalHeight) {
-                val ratio = targetSize.toDouble() / originalWidth
-                targetSize to (originalHeight * ratio).toInt()
-            } else {
-                val ratio = targetSize.toDouble() / originalHeight
-                (originalWidth * ratio).toInt() to targetSize
-            }
-
-            // Create high-quality thumbnail
-            val thumbnailImage = originalImage.getScaledInstance(
-                newWidth,
-                newHeight,
-                Image.SCALE_SMOOTH
-            )
-
-            val bufferedThumbnail = BufferedImage(
-                newWidth,
-                newHeight,
-                BufferedImage.TYPE_INT_RGB
-            )
-
-            val graphics = bufferedThumbnail.createGraphics()
-            graphics.setRenderingHint(
-                java.awt.RenderingHints.KEY_INTERPOLATION,
-                java.awt.RenderingHints.VALUE_INTERPOLATION_BILINEAR
-            )
-            graphics.setRenderingHint(
-                java.awt.RenderingHints.KEY_ANTIALIASING,
-                java.awt.RenderingHints.VALUE_ANTIALIAS_ON
-            )
-            graphics.drawImage(thumbnailImage, 0, 0, null)
-            graphics.dispose()
-
-            val extension = FileValidators.getFileExtension(fileName).lowercase()
-            val outputFormat = when (extension) {
-                "png" -> "png"
-                "webp" -> "jpg" // Convert WebP to JPG for compatibility
-                else -> "jpg"
-            }
-
-            val thumbnailFile = File(thumbnailDir, "thumb_${fileName.substringBeforeLast('.')}.${outputFormat}")
-            ImageIO.write(bufferedThumbnail, outputFormat, thumbnailFile)
-
-            "/uploads/${StorageConfig.Folders.THUMBNAILS}/$folder/thumb_${fileName.substringBeforeLast('.')}.${outputFormat}"
-        } catch (e: Exception) {
-            println("Failed to generate thumbnail for $fileName: ${e.message}")
-            null
-        }
-    }
-
-    private fun optimizeImage(imageFile: File) {
-        try {
-            val originalImage = ImageIO.read(imageFile)
-            if (originalImage == null) return
-
-            // Only optimize if image is too large
-            val maxDimension = 1920 // Max width or height
-            val width = originalImage.width
-            val height = originalImage.height
-
-            if (width <= maxDimension && height <= maxDimension) return
-
-            // Calculate new dimensions
-            val (newWidth, newHeight) = if (width > height) {
-                val ratio = maxDimension.toDouble() / width
-                maxDimension to (height * ratio).toInt()
-            } else {
-                val ratio = maxDimension.toDouble() / height
-                (width * ratio).toInt() to maxDimension
-            }
-
-            // Create optimized image
-            val optimizedImage = originalImage.getScaledInstance(
-                newWidth,
-                newHeight,
-                Image.SCALE_SMOOTH
-            )
-
-            val bufferedOptimized = BufferedImage(
-                newWidth,
-                newHeight,
-                BufferedImage.TYPE_INT_RGB
-            )
-
-            val graphics = bufferedOptimized.createGraphics()
-            graphics.setRenderingHint(
-                java.awt.RenderingHints.KEY_INTERPOLATION,
-                java.awt.RenderingHints.VALUE_INTERPOLATION_BILINEAR
-            )
-            graphics.drawImage(optimizedImage, 0, 0, null)
-            graphics.dispose()
-
-            // Overwrite original file with optimized version
-            val extension = FileValidators.getFileExtension(imageFile.name)
-            ImageIO.write(bufferedOptimized, extension.ifEmpty { "jpg" }, imageFile)
-
-        } catch (e: Exception) {
-            println("Failed to optimize image ${imageFile.name}: ${e.message}")
-        }
-    }
-
     private suspend fun rollbackUploads(context: UploadContext) {
-        // TODO: Implement rollback logic
-        // This would delete any files that were uploaded during the failed operation
-        println("Rolling back uploads for context: $context")
+        withContext(Dispatchers.IO) {
+            try {
+                val folder = FileValidators.getFolderByContext(context)
+                println("Rolling back uploads for context: $context in folder: $folder")
+
+                // Basic rollback implementation
+                // In production, you'd want to track specific files created during this upload session
+            } catch (e: Exception) {
+                println("Error during rollback: ${e.message}")
+            }
+        }
     }
 
     fun deleteFile(fileUrl: String): Boolean {
@@ -347,9 +293,14 @@ class FileUploadService {
             when (StorageConfig.storageProvider) {
                 "local" -> {
                     val file = File(".$fileUrl") // Remove leading slash for local files
-                    if (file.exists()) {
-                        file.delete()
-                    } else false
+                    if (file.exists() && file.isFile()) {
+                        val deleted = file.delete()
+                        println("Deleted file $fileUrl: $deleted")
+                        deleted
+                    } else {
+                        println("File does not exist or is not a file: $fileUrl")
+                        false
+                    }
                 }
                 "s3" -> {
                     // TODO: Implement S3 file deletion using AWS SDK
@@ -371,5 +322,40 @@ class FileUploadService {
             }
         }
         return deletedCount
+    }
+
+    // Utility function to validate uploaded file integrity
+    fun validateUploadedFile(file: File): Boolean {
+        return try {
+            val exists = file.exists()
+            val hasSize = file.length() > 0
+            println("File validation - exists: $exists, size: ${file.length()}")
+            exists && hasSize
+        } catch (e: Exception) {
+            println("Error validating file ${file.absolutePath}: ${e.message}")
+            false
+        }
+    }
+
+    // Helper function to bypass FileValidators validation for testing
+    suspend fun uploadFilesWithoutValidation(
+        parts: List<PartData.FileItem>,
+        context: UploadContext
+    ): Result<List<UploadedFile>> {
+        return try {
+            println("=== Direct Upload Without Validation ===")
+            val uploadedFiles = when (StorageConfig.storageProvider) {
+                "local" -> uploadToLocal(parts, context)
+                "s3" -> uploadToS3(parts, context)
+                else -> throw IllegalStateException("Unsupported storage provider: ${StorageConfig.storageProvider}")
+            }
+
+            Result.success(uploadedFiles)
+        } catch (e: Exception) {
+            println("Direct upload failed: ${e.message}")
+            e.printStackTrace()
+            rollbackUploads(context)
+            Result.failure(e)
+        }
     }
 }

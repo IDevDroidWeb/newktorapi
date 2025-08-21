@@ -62,7 +62,7 @@ class UserService {
 
     private fun User.toResponseDto() = UserResponseDto(
         id = id.toString(),
-        picture = picture,
+        profilePicture = profilePicture,
         name = name,
         phone = phone,
         email = email,

@@ -75,7 +75,7 @@ fun Route.userRoutes() {
                         }
 
                         val finalUpdateRequest = data.copy(
-                            picture = profilePictureUrl ?: data.picture
+                            profilePicture = profilePictureUrl ?: data.profilePicture
                         )
 
                         val updatedUser = userService.updateUser(userId, finalUpdateRequest)
@@ -84,6 +84,7 @@ fun Route.userRoutes() {
                     } else {
                         // Handle regular JSON request (no file upload)
                         val request = call.receive<UpdateUserRequest>()
+                        println("🟢 Incoming UpdateUserRequest: $request")
                         val updatedUser = userService.updateUser(userId, request)
                         call.respondSuccess(updatedUser, "Profile updated successfully")
                     }
