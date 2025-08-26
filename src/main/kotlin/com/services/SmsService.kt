@@ -31,7 +31,7 @@ class SmsService {
                 return true
             }
 
-            val message = "Your Real Estate verification code is: $code. Do not share this code with anyone."
+            val message = "Hello from your ReZone family 💙\nHere’s your secure code: $code\nKeep it private, we care about your safety.\nGlad to have you with us! 🚀"
 
             val response = client.post("https://api.plivo.com/v1/Account/${AppConfig.plivoAuthId}/Message/") {
                 contentType(ContentType.Application.Json)
